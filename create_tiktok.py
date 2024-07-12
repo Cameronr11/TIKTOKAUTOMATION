@@ -5,7 +5,6 @@ from dotenv import load_dotenv
 from moviepy.editor import VideoFileClip, CompositeVideoClip
 from openai import OpenAI
 
-
 # Load environment variables from .env file
 load_dotenv()
 
@@ -19,13 +18,14 @@ if not api_key:
 # Instantiate the OpenAI client
 client = OpenAI(api_key=api_key)
 
-
 # Function to generate text using OpenAI GPT-3.5
 def generate_text(prompt, max_tokens=50, temperature=0.7):
-    response = client.chat.completions.create(model="gpt-3.5-turbo",  # Using the latest chat model
-    messages=[{"role": "user", "content": prompt}],
-    max_tokens=max_tokens,
-    temperature=temperature)
+    response = client.chat.completions.create(
+        model="gpt-3.5-turbo",  # Using the latest chat model
+        messages=[{"role": "user", "content": prompt}],
+        max_tokens=max_tokens,
+        temperature=temperature,
+    )
     return response.choices[0].message.content.strip()
 
 # Function to generate caption and hashtags using GPT-3.5
@@ -43,6 +43,15 @@ def generate_caption_and_hashtags(chunk):
     caption = caption_output.strip().split('\n')[0]  # Take the first line as the caption
 
     return {"caption": caption, "hashtags": hashtags}
+
+# Function to save caption and hashtags to a text file
+def save_caption_and_hashtags(tiktok_folder, caption_and_hashtags):
+    text_file_path = os.path.join(tiktok_folder, "caption_and_hashtags.txt")
+    with open(text_file_path, "w", encoding="utf-8") as file:
+        file.write(f"Caption:\n{caption_and_hashtags['caption']}\n\n")
+        file.write("Hashtags:\n")
+        file.write(" ".join(caption_and_hashtags['hashtags']))
+    print(f"Saved caption and hashtags to {text_file_path}")
 
 # Function to create TikTok video by combining the clipped content and gameplay
 def create_tiktok_video(clipped_content_path, gameplay_path, output_path):
@@ -79,15 +88,30 @@ if __name__ == "__main__":
     metadata = load_metadata(metadata_path)
 
     print("Creating TikTok posts...")
+    tiktok_count = 1
+
     for video_id, clips in metadata.items():
         for clip_info in clips:
+            tiktok_folder = os.path.join(output_folder, f"TIKTOK {tiktok_count}")
+            os.makedirs(tiktok_folder, exist_ok=True)
+
             clip_path = clip_info['clip_path']
             chunk = clip_info['chunk']
             caption_and_hashtags = generate_caption_and_hashtags(chunk)
-            output_path = os.path.join(output_folder, os.path.basename(clip_path))
+
+            video_output_path = os.path.join(tiktok_folder, f"TIKTOK_{tiktok_count}.mp4")
             gameplay_path = os.path.join(gameplay_folder, random.choice(os.listdir(gameplay_folder)))
-            create_tiktok_video(clip_path, gameplay_path, output_path)
+            create_tiktok_video(clip_path, gameplay_path, video_output_path)
+            
+            save_caption_and_hashtags(tiktok_folder, caption_and_hashtags)
+            
             print(f"Caption: {caption_and_hashtags['caption']}")
             print(f"Hashtags: {' '.join(caption_and_hashtags['hashtags'])}")
 
+            tiktok_count += 1
+
     print(f"TikTok posts created and saved to {output_folder}.")
+
+
+
+#This file with changes includes a way to pair the caption/hashtag with the coresponding video in their own folders
