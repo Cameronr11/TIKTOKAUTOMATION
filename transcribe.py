@@ -88,9 +88,6 @@ def transcribe_videos_in_folder(folder_path):
             
             print(f"Transcribed {filename}")
 
-if __name__ == "__main__":
-    videos_folder = "C:\\Users\\Cameron\\OneDrive\\Desktop\\TikTok Project\\Videos"
-    transcribe_videos_in_folder(videos_folder)
 
 
 

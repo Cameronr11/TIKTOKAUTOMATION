@@ -2,6 +2,7 @@ import os
 import torch
 from transformers import GPT2LMHeadModel, GPT2Tokenizer
 from moviepy.editor import VideoFileClip
+import json
 
 # Function to load transcripts
 def load_transcripts(transcripts_folder):
@@ -34,7 +35,7 @@ def rate_chunks_with_gpt2(chunks, prompt="Identify the segments of the following
         logits = outputs.logits[:, -1, :]
         score = torch.mean(logits).item()
         normalized_score = (score - logits.min().item()) / (logits.max().item() - logits.min().item()) * 100
-        scores.append(normalized_score)
+        scores.append((chunk, normalized_score))
         print(f"Rated chunk with normalized score: {normalized_score}")
 
     return scores
@@ -60,7 +61,7 @@ def map_chunks_to_timestamps(transcripts_folder, processed_transcripts, threshol
         transcript = "\n".join(chunks)
         
         # Sort chunks by score in descending order and take the top 5
-        top_chunks_with_scores = sorted(zip(chunks, scores), key=lambda x: x[1], reverse=True)[:5]
+        top_chunks_with_scores = sorted(scores, key=lambda x: x[1], reverse=True)[:5]
         
         interesting_chunks_with_timestamps[video_id] = []
         
@@ -104,29 +105,29 @@ def clip_interesting_segments(interesting_chunks_with_timestamps, videos_folder,
                 output_path = os.path.join(output_folder, f"{video_id}_clip_{idx+1}.mp4")
                 clip.write_videofile(output_path, codec='libx264')
                 print(f"Saved clip: {output_path}")
+                # Save metadata
+                save_metadata(video_id, idx, output_path, chunk)
             except OSError as e:
                 print(f"Error processing clip {video_id}_clip_{idx+1}: {e}")
 
-# Main function to run the entire process
-if __name__ == "__main__":
-    transcripts_folder = "C:\\Users\\Cameron\\OneDrive\\Desktop\\TikTok Project\\Videos"
-    videos_folder = "C:\\Users\\Cameron\\OneDrive\\Desktop\\TikTok Project\\Videos"
-    output_folder = "C:\\Users\\Cameron\\OneDrive\\Desktop\\TikTok Project\\Clips"
+# Function to save metadata
+def save_metadata(video_id, idx, clip_path, chunk):
+    metadata_path = os.path.join("C:\\Users\\Cameron\\OneDrive\\Desktop\\TikTok Project\\Videos", "metadata.json")
+    if os.path.exists(metadata_path):
+        with open(metadata_path, "r") as f:
+            metadata = json.load(f)
+    else:
+        metadata = {}
+    
+    if video_id not in metadata:
+        metadata[video_id] = []
+    
+    metadata[video_id].append({
+        "clip_path": clip_path,
+        "chunk": chunk
+    })
+    
+    with open(metadata_path, "w") as f:
+        json.dump(metadata, f, indent=4)
 
-    print("Loading transcripts...")
-    transcripts = load_transcripts(transcripts_folder)
-    
-    processed_transcripts = {}
-    for video_id, transcript in transcripts.items():
-        chunks = split_into_chunks(transcript, chunk_size=100)
-        print(f"Processed transcript for video ID: {video_id} into {len(chunks)} chunks")
-        scores = rate_chunks_with_gpt2(chunks)
-        processed_transcripts[video_id] = (chunks, scores)
-    
-    print("Mapping chunks to timestamps...")
-    interesting_chunks_with_timestamps = map_chunks_to_timestamps(transcripts_folder, processed_transcripts)
-    
-    print("Clipping interesting segments...")
-    clip_interesting_segments(interesting_chunks_with_timestamps, videos_folder, output_folder)
-    
-    print(f"Clipped the top 5 highest-rated segments from each video.")
+

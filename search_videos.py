@@ -69,39 +69,3 @@ def download_youtube_video(video_id, output_dir, cookies_path):
     }
     with youtube_dl.YoutubeDL(ydl_opts) as ydl:
         ydl.download([url])
-
-if __name__ == "__main__":
-    query = "best of shane gillis"
-    max_results = 400
-    category_id = None
-    published_after = "2023-01-01T00:00:00Z"
-
-    youtube_client = get_authenticated_service()
-    print("Authenticated YouTube client")
-
-    videos = search_videos(youtube_client, query, max_results, category_id, 'viewCount', published_after)
-    print(f"Found {len(videos)} videos")
-
-    if videos:
-        top_videos = get_top_videos_by_view_count(videos, top_n=5)
-        print(f"Top {len(top_videos)} videos by view count")
-
-        project_dir = os.path.dirname(os.path.abspath(__file__))
-        DOWNLOAD_DIR = os.path.join(project_dir, 'Videos')
-        os.makedirs(DOWNLOAD_DIR, exist_ok=True)
-
-        COOKIES_PATH = os.path.join(project_dir, 'cookies.txt')  # Path to your exported cookies
-
-        for video in top_videos:
-            video_id = video['video_id']
-            video_title = video['title']
-            print(f"Downloading: {video_title} with {video['view_count']} views.")
-
-            start_time = time.time()
-            download_youtube_video(video_id, DOWNLOAD_DIR, COOKIES_PATH)
-            end_time = time.time()
-
-            duration = end_time - start_time
-            print(f"Downloaded {video_title} to {DOWNLOAD_DIR} in {duration:.2f} seconds")
-    else:
-        print("No videos found")
