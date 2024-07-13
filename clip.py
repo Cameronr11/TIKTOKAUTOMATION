@@ -33,10 +33,10 @@ def split_into_chunks(transcript, chunk_size=100):
     return [" ".join(words[i:i + chunk_size]) for i in range(0, len(words), chunk_size)]
 
 # Function to rate chunks with GPT-3.5
-def rate_chunks_with_gpt3(chunks, prompt="Identify the segments of the following text that are the most entertaining, engaging, emotional, and attention-grabbing. These segments should be suitable for creating short, impactful TikTok clips:"):
+def rate_chunks_with_gpt3(chunks, prompt="Identify the segments of the following text that are the most entertaining, engaging, emotional, and attention-grabbing for the purpose of posting to TikTok. Provide a single overall score for each segment on a scale of 1 to 100. Format the response with each segment and its score on a new line in the following format: 'Segment: [segment text] - Score: [score]'"):
     scores = []
     for chunk in chunks:
-        input_text = f"{prompt}\n\n{chunk}"
+        input_text = f"{prompt}\n\nText:\n{chunk}"
         print(f"Sending request to GPT-3.5 for chunk: {chunk[:30]}...")  # Print first 30 characters of the chunk for tracking
         response = client.chat.completions.create(
             model="gpt-3.5-turbo",
@@ -53,13 +53,20 @@ def rate_chunks_with_gpt3(chunks, prompt="Identify the segments of the following
             print(f"No valid lines found in response: {output_text}")
             continue
 
-        for i, line in enumerate(lines):
-            score = 100 - i * (100 / len(lines))  # Score based on the position in the list
-            scores.append((chunk, line.strip(), score))
-            print(f"Rated chunk with score: {score}")
+        for line in lines:
+            try:
+                # Extract the segment and score from the response line
+                segment, score_str = line.split(" - Score: ")
+                score = int(score_str)
+                if 1 <= score <= 100:  # Ensure the score is within the expected range
+                    scores.append((chunk, segment.strip(), score))
+                    print(f"Rated chunk with score: {score}")
+                else:
+                    print(f"Invalid score received: {score}")
+            except (ValueError, IndexError) as e:
+                print(f"Error parsing score from line: {line} - {e}")
 
     return scores
-
 # Function to map chunks to timestamps
 def map_chunks_to_timestamps(transcripts_folder, processed_transcripts, threshold=50):
     interesting_chunks_with_timestamps = {}
@@ -99,7 +106,7 @@ def map_chunks_to_timestamps(transcripts_folder, processed_transcripts, threshol
                 end_time = min(end_time, duration)
                 
                 # change the range to determine how long you want your clips to be
-                if 30 <= (end_time - start_time) <= 240:
+                if 60 <= (end_time - start_time) <= 240:
                     interesting_chunks_with_timestamps[video_id].append((chunk, start_time, end_time, score))
                     print(f"Mapped chunk to timestamps: start={start_time}, end={end_time}, score={score}")
                 else:
@@ -153,8 +160,6 @@ def save_metadata(video_id, idx, clip_path, chunk):
     with open(metadata_path, "w") as f:
         json.dump(metadata, f, indent=4)
 
-
-'''
 if __name__ == "__main__":
     TRANSCRIPTS_FOLDER = "C:\\Users\\Cameron\\OneDrive\\Desktop\\TikTok Project\\Videos"
     CLIPS_FOLDER = "C:\\Users\\Cameron\\OneDrive\\Desktop\\TikTok Project\\Clips"
@@ -176,4 +181,3 @@ if __name__ == "__main__":
     
     print("Process completed.")
 
-'''
