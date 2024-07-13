@@ -92,4 +92,8 @@ def transcribe_videos_in_folder(folder_path):
 
 
 
-
+'''
+if __name__ == "__main__":
+    folder_path = "C:\\Users\\Cameron\\OneDrive\\Desktop\\TikTok Project\\Videos"
+    transcribe_videos_in_folder(folder_path)
+'''

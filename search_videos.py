@@ -69,3 +69,30 @@ def download_youtube_video(video_id, output_dir, cookies_path):
     }
     with youtube_dl.YoutubeDL(ydl_opts) as ydl:
         ydl.download([url])
+
+
+'''
+if __name__ == "__main__":
+    BASE_DIR = "C:\\Users\\Cameron\\OneDrive\\Desktop\\TikTok Project"
+    VIDEOS_DIR = os.path.join(BASE_DIR, 'Videos')
+    COOKIES_PATH = os.path.join(BASE_DIR, 'cookies.txt')  # Path to your exported cookies
+
+    # Ensure the Videos directory exists
+    os.makedirs(VIDEOS_DIR, exist_ok=True)
+
+    query = "best of jordan peterson"
+    max_results = 400
+    category_id = None
+    published_after = "2023-01-01T00:00:00Z"
+
+    youtube_client = get_authenticated_service()
+    videos = search_videos(youtube_client, query, max_results, category_id, 'viewCount', published_after)
+
+    if videos:
+        top_videos = get_top_videos_by_view_count(videos, top_n=2)
+        for video in top_videos:
+            video_id = video['video_id']
+            download_youtube_video(video_id, VIDEOS_DIR, COOKIES_PATH)
+            print(f"Downloaded video {video_id}")
+
+'''

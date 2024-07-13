@@ -1,8 +1,21 @@
 import os
-import torch
-from transformers import GPT2LMHeadModel, GPT2Tokenizer
-from moviepy.editor import VideoFileClip
 import json
+from dotenv import load_dotenv
+from moviepy.editor import VideoFileClip
+from openai import OpenAI
+
+# Load environment variables from .env file
+load_dotenv()
+
+print(f"Open_ai_key : {os.getenv('OPEN_AI_API_KEY')}")
+
+# Set up your OpenAI API key
+api_key = os.getenv("OPEN_AI_API_KEY")
+if not api_key:
+    raise ValueError("OPEN_AI_API_KEY environment variable not set")
+
+# Instantiate the OpenAI client
+client = OpenAI(api_key=api_key)
 
 # Function to load transcripts
 def load_transcripts(transcripts_folder):
@@ -19,24 +32,31 @@ def split_into_chunks(transcript, chunk_size=100):
     words = transcript.split()
     return [" ".join(words[i:i + chunk_size]) for i in range(0, len(words), chunk_size)]
 
-# Function to rate chunks with GPT-2
-def rate_chunks_with_gpt2(chunks, prompt="Identify the segments of the following text that are the most entertaining, engaging, emotional, and attention-grabbing. These segments should be suitable for creating short, impactful TikTok clips:"):
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    model_name = "gpt2"
-    tokenizer = GPT2Tokenizer.from_pretrained(model_name)
-    model = GPT2LMHeadModel.from_pretrained(model_name).to(device)
-    
+# Function to rate chunks with GPT-3.5
+def rate_chunks_with_gpt3(chunks, prompt="Identify the segments of the following text that are the most entertaining, engaging, emotional, and attention-grabbing. These segments should be suitable for creating short, impactful TikTok clips:"):
     scores = []
     for chunk in chunks:
         input_text = f"{prompt}\n\n{chunk}"
-        inputs = tokenizer(input_text, return_tensors="pt", max_length=1024, truncation=True).to(device)
-        with torch.no_grad():
-            outputs = model(**inputs)
-        logits = outputs.logits[:, -1, :]
-        score = torch.mean(logits).item()
-        normalized_score = (score - logits.min().item()) / (logits.max().item() - logits.min().item()) * 100
-        scores.append((chunk, normalized_score))
-        print(f"Rated chunk with normalized score: {normalized_score}")
+        print(f"Sending request to GPT-3.5 for chunk: {chunk[:30]}...")  # Print first 30 characters of the chunk for tracking
+        response = client.chat.completions.create(
+            model="gpt-3.5-turbo",
+            messages=[{"role": "user", "content": input_text}],
+            max_tokens=150,
+            temperature=0.7,
+        )
+        output_text = response.choices[0].message.content.strip()
+        print(f"Received response: {output_text}")  # Print the received response
+
+        # Extract and score each line of the response
+        lines = [line for line in output_text.split('\n') if line.strip()]
+        if not lines:
+            print(f"No valid lines found in response: {output_text}")
+            continue
+
+        for i, line in enumerate(lines):
+            score = 100 - i * (100 / len(lines))  # Score based on the position in the list
+            scores.append((chunk, line.strip(), score))
+            print(f"Rated chunk with score: {score}")
 
     return scores
 
@@ -61,11 +81,11 @@ def map_chunks_to_timestamps(transcripts_folder, processed_transcripts, threshol
         transcript = "\n".join(chunks)
         
         # Sort chunks by score in descending order and take the top n with n being reverse=True)[:n]
-        top_chunks_with_scores = sorted(scores, key=lambda x: x[1], reverse=True)[:2]
+        top_chunks_with_scores = sorted(scores, key=lambda x: x[2], reverse=True)[:2]
         
         interesting_chunks_with_timestamps[video_id] = []
         
-        for chunk, score in top_chunks_with_scores:
+        for chunk, line, score in top_chunks_with_scores:
             if score >= threshold:
                 start_pos = transcript.find(chunk)
                 if start_pos == -1:
@@ -79,7 +99,7 @@ def map_chunks_to_timestamps(transcripts_folder, processed_transcripts, threshol
                 end_time = min(end_time, duration)
                 
                 # change the range to determine how long you want your clips to be
-                if 70 <= (end_time - start_time) <= 240:
+                if 30 <= (end_time - start_time) <= 240:
                     interesting_chunks_with_timestamps[video_id].append((chunk, start_time, end_time, score))
                     print(f"Mapped chunk to timestamps: start={start_time}, end={end_time}, score={score}")
                 else:
@@ -119,7 +139,6 @@ def save_metadata(video_id, idx, clip_path, chunk):
         print("metadata path exists")
         with open(metadata_path, "r") as f:
             metadata = json.load(f)
-            print()
     else:
         metadata = {}
     
@@ -135,3 +154,26 @@ def save_metadata(video_id, idx, clip_path, chunk):
         json.dump(metadata, f, indent=4)
 
 
+'''
+if __name__ == "__main__":
+    TRANSCRIPTS_FOLDER = "C:\\Users\\Cameron\\OneDrive\\Desktop\\TikTok Project\\Videos"
+    CLIPS_FOLDER = "C:\\Users\\Cameron\\OneDrive\\Desktop\\TikTok Project\\Clips"
+
+    print("Loading transcripts...")
+    transcripts = load_transcripts(TRANSCRIPTS_FOLDER)
+    processed_transcripts = {}
+    for video_id, transcript in transcripts.items():
+        print(f"Processing video ID: {video_id}")
+        chunks = split_into_chunks(transcript, chunk_size=100)
+        scores = rate_chunks_with_gpt3(chunks)
+        processed_transcripts[video_id] = (chunks, scores)
+    
+    print("Mapping chunks to timestamps...")
+    interesting_chunks_with_timestamps = map_chunks_to_timestamps(TRANSCRIPTS_FOLDER, processed_transcripts)
+    
+    print("Clipping interesting segments...")
+    clip_interesting_segments(interesting_chunks_with_timestamps, TRANSCRIPTS_FOLDER, CLIPS_FOLDER)
+    
+    print("Process completed.")
+
+'''

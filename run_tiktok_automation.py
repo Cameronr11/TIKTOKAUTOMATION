@@ -1,10 +1,11 @@
 import os
 from search_videos import get_authenticated_service, search_videos, get_top_videos_by_view_count, download_youtube_video
 from transcribe import transcribe_videos_in_folder
-from clip import load_transcripts, split_into_chunks, rate_chunks_with_gpt2, map_chunks_to_timestamps, clip_interesting_segments
+from clip import load_transcripts, split_into_chunks, rate_chunks_with_gpt3, map_chunks_to_timestamps, clip_interesting_segments
 from create_tiktok import create_tiktok_video, generate_caption_and_hashtags, save_caption_and_hashtags, load_metadata
 import random
 import shutil
+import time
 
 # Define directories
 BASE_DIR = "C:\\Users\\Cameron\\OneDrive\\Desktop\\TikTok Project"
@@ -17,7 +18,7 @@ METADATA_PATH = os.path.join(VIDEOS_DIR, 'metadata.json')
 
 # Step 1: Download videos
 def download_videos():
-    query = "cristiano ronaldo hightlights"
+    query = "best of mesut ozil"
     max_results = 400
     category_id = None
     published_after = "2023-01-01T00:00:00Z"
@@ -41,7 +42,7 @@ def clip_videos():
     processed_transcripts = {}
     for video_id, transcript in transcripts.items():
         chunks = split_into_chunks(transcript, chunk_size=100)
-        scores = rate_chunks_with_gpt2(chunks)
+        scores = rate_chunks_with_gpt3(chunks)
         processed_transcripts[video_id] = (chunks, scores)
     
     interesting_chunks_with_timestamps = map_chunks_to_timestamps(VIDEOS_DIR, processed_transcripts)
@@ -75,6 +76,7 @@ def create_tiktok_posts():
 
 # Cleanup function
 def clean_up():
+    time.sleep(5)
     # Delete Videos folder and its contents
     if os.path.exists(VIDEOS_DIR):
         shutil.rmtree(VIDEOS_DIR)
