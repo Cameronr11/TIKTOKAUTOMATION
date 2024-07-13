@@ -22,7 +22,7 @@ def is_video_short(duration):
         print(f"Error parsing duration {duration}: {e}")
         return True  # Treat parsing errors as short videos to exclude them
     
-def search_videos(youtube, query, max_results=10, category_id=None, order='viewCount', published_after=None):
+def search_videos(youtube, query, max_results, category_id=None, order='viewCount', published_after=None):
     request = youtube.search().list(
         q=query,
         part="id,snippet",
@@ -55,7 +55,7 @@ def search_videos(youtube, query, max_results=10, category_id=None, order='viewC
             })
     return videos
 
-def get_top_videos_by_view_count(videos, top_n=5):
+def get_top_videos_by_view_count(videos, top_n): #change top_n for how many videos you want to donwload
     sorted_videos = sorted(videos, key=lambda x: x['view_count'], reverse=True)
     return sorted_videos[:top_n]
 

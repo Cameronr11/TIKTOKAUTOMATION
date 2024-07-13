@@ -60,8 +60,8 @@ def map_chunks_to_timestamps(transcripts_folder, processed_transcripts, threshol
         
         transcript = "\n".join(chunks)
         
-        # Sort chunks by score in descending order and take the top 5
-        top_chunks_with_scores = sorted(scores, key=lambda x: x[1], reverse=True)[:5]
+        # Sort chunks by score in descending order and take the top n with n being reverse=True)[:n]
+        top_chunks_with_scores = sorted(scores, key=lambda x: x[1], reverse=True)[:2]
         
         interesting_chunks_with_timestamps[video_id] = []
         
@@ -78,8 +78,8 @@ def map_chunks_to_timestamps(transcripts_folder, processed_transcripts, threshol
                 # Ensure end_time does not exceed video's duration
                 end_time = min(end_time, duration)
                 
-                # Check if the clip length is between 30 seconds and 4 minutes
-                if 30 <= (end_time - start_time) <= 240:
+                # change the range to determine how long you want your clips to be
+                if 70 <= (end_time - start_time) <= 240:
                     interesting_chunks_with_timestamps[video_id].append((chunk, start_time, end_time, score))
                     print(f"Mapped chunk to timestamps: start={start_time}, end={end_time}, score={score}")
                 else:
@@ -107,15 +107,19 @@ def clip_interesting_segments(interesting_chunks_with_timestamps, videos_folder,
                 print(f"Saved clip: {output_path}")
                 # Save metadata
                 save_metadata(video_id, idx, output_path, chunk)
+                print("save metadata ran")
             except OSError as e:
                 print(f"Error processing clip {video_id}_clip_{idx+1}: {e}")
 
 # Function to save metadata
 def save_metadata(video_id, idx, clip_path, chunk):
     metadata_path = os.path.join("C:\\Users\\Cameron\\OneDrive\\Desktop\\TikTok Project\\Videos", "metadata.json")
+    print("created metadata path")
     if os.path.exists(metadata_path):
+        print("metadata path exists")
         with open(metadata_path, "r") as f:
             metadata = json.load(f)
+            print()
     else:
         metadata = {}
     
