@@ -159,7 +159,7 @@ def save_metadata(video_id, idx, clip_path, chunk):
     
     with open(metadata_path, "w") as f:
         json.dump(metadata, f, indent=4)
-
+'''
 if __name__ == "__main__":
     TRANSCRIPTS_FOLDER = "C:\\Users\\Cameron\\OneDrive\\Desktop\\TikTok Project\\Videos"
     CLIPS_FOLDER = "C:\\Users\\Cameron\\OneDrive\\Desktop\\TikTok Project\\Clips"
@@ -180,4 +180,4 @@ if __name__ == "__main__":
     clip_interesting_segments(interesting_chunks_with_timestamps, TRANSCRIPTS_FOLDER, CLIPS_FOLDER)
     
     print("Process completed.")
-
+'''
