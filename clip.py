@@ -22,18 +22,19 @@ def load_transcripts(transcripts_folder):
     transcripts = {}
     for filename in os.listdir(transcripts_folder):
         if filename.endswith("_transcript.txt"):
-            video_id = filename.split("_")[0]
+            video_id = filename.rsplit("_transcript.txt", 1)[0]  # Use rsplit to remove only the suffix
             with open(os.path.join(transcripts_folder, filename), 'r') as f:
                 transcripts[video_id] = f.read()
     return transcripts
 
+
 # Function to split transcripts into chunks
-def split_into_chunks(transcript, chunk_size=100):
+def split_into_chunks(transcript, chunk_size):
     words = transcript.split()
     return [" ".join(words[i:i + chunk_size]) for i in range(0, len(words), chunk_size)]
 
 # Function to rate chunks with GPT-3.5
-def rate_chunks_with_gpt3(chunks, prompt="Identify the segments of the following text that are the most entertaining, engaging, emotional, and attention-grabbing for the purpose of posting to TikTok. Provide a single overall score for each segment on a scale of 1 to 100. Format the response with each segment and its score on a new line in the following format: 'Segment: [segment text] - Score: [score]'"):
+def rate_chunks_with_gpt3(chunks, prompt="Identify the segments of the following text that contain the most attention-grabbing content for the purpose of posting to TikTok. Provide a single overall score for each segment on a scale of 1 to 100. Format the response with each segment and its score on a new line in the following format: 'Segment: [segment text] - Score: [score]'"):
     scores = []
     for chunk in chunks:
         input_text = f"{prompt}\n\nText:\n{chunk}"
@@ -88,7 +89,7 @@ def map_chunks_to_timestamps(transcripts_folder, processed_transcripts, threshol
         transcript = "\n".join(chunks)
         
         # Sort chunks by score in descending order and take the top n with n being reverse=True)[:n]
-        top_chunks_with_scores = sorted(scores, key=lambda x: x[2], reverse=True)[:2]
+        top_chunks_with_scores = sorted(scores, key=lambda x: x[2], reverse=True)[:4]
         
         interesting_chunks_with_timestamps[video_id] = []
         
@@ -106,11 +107,12 @@ def map_chunks_to_timestamps(transcripts_folder, processed_transcripts, threshol
                 end_time = min(end_time, duration)
                 
                 # change the range to determine how long you want your clips to be
-                if 60 <= (end_time - start_time) <= 240:
+                if 70 <= (end_time - start_time) <= 240:
                     interesting_chunks_with_timestamps[video_id].append((chunk, start_time, end_time, score))
                     print(f"Mapped chunk to timestamps: start={start_time}, end={end_time}, score={score}")
                 else:
                     print(f"Skipped chunk due to unreasonable length: start={start_time}, end={end_time}, duration={end_time - start_time}")
+                print(f"interesting chunks with timestamps: {interesting_chunks_with_timestamps}")
     
     return interesting_chunks_with_timestamps
 
@@ -119,8 +121,11 @@ def clip_interesting_segments(interesting_chunks_with_timestamps, videos_folder,
     os.makedirs(output_folder, exist_ok=True)
     
     for video_id, chunks_with_timestamps in interesting_chunks_with_timestamps.items():
+        print(f"video id: {video_id}")
         for idx, (chunk, start_time, end_time, score) in enumerate(chunks_with_timestamps):
+            print("trying to find video path")
             video_path = os.path.join(videos_folder, f"{video_id}.mp4")
+            print(f"video_path: {video_path}")
 
             if not os.path.exists(video_path):
                 print(f"Error: Video file {video_path} not found. Skipping...")
@@ -128,8 +133,11 @@ def clip_interesting_segments(interesting_chunks_with_timestamps, videos_folder,
 
             try:
                 video = VideoFileClip(video_path)
+                print("video variable saved")
                 clip = video.subclip(start_time, end_time)
+                print("clip variable saved")
                 output_path = os.path.join(output_folder, f"{video_id}_clip_{idx+1}.mp4")
+                print("created output path")
                 clip.write_videofile(output_path, codec='libx264')
                 print(f"Saved clip: {output_path}")
                 # Save metadata
@@ -140,13 +148,27 @@ def clip_interesting_segments(interesting_chunks_with_timestamps, videos_folder,
 
 # Function to save metadata
 def save_metadata(video_id, idx, clip_path, chunk):
+    print("Calling save metadata")
     metadata_path = os.path.join("C:\\Users\\Cameron\\OneDrive\\Desktop\\TikTok Project\\Videos", "metadata.json")
-    print("created metadata path")
+    print(f"Metadata path: {metadata_path}")
+    
+    # Check if the directory exists
+    directory = os.path.dirname(metadata_path)
+    if not os.path.exists(directory):
+        print(f"Directory {directory} does not exist, creating it.")
+        os.makedirs(directory)
+    
     if os.path.exists(metadata_path):
-        print("metadata path exists")
-        with open(metadata_path, "r") as f:
-            metadata = json.load(f)
+        print("Metadata file exists")
+        try:
+            with open(metadata_path, "r") as f:
+                metadata = json.load(f)
+                print("Loaded existing metadata")
+        except json.JSONDecodeError:
+            print("Error: Failed to decode JSON. Starting with an empty metadata.")
+            metadata = {}
     else:
+        print("Metadata file does not exist. Creating new metadata.")
         metadata = {}
     
     if video_id not in metadata:
@@ -157,9 +179,14 @@ def save_metadata(video_id, idx, clip_path, chunk):
         "chunk": chunk
     })
     
-    with open(metadata_path, "w") as f:
-        json.dump(metadata, f, indent=4)
-'''
+    try:
+        with open(metadata_path, "w") as f:
+            json.dump(metadata, f, indent=4)
+        print(f"Successfully saved metadata for video_id: {video_id}")
+    except Exception as e:
+        print(f"Error: Failed to write metadata to {metadata_path}. Exception: {e}")
+
+
 if __name__ == "__main__":
     TRANSCRIPTS_FOLDER = "C:\\Users\\Cameron\\OneDrive\\Desktop\\TikTok Project\\Videos"
     CLIPS_FOLDER = "C:\\Users\\Cameron\\OneDrive\\Desktop\\TikTok Project\\Clips"
@@ -169,7 +196,7 @@ if __name__ == "__main__":
     processed_transcripts = {}
     for video_id, transcript in transcripts.items():
         print(f"Processing video ID: {video_id}")
-        chunks = split_into_chunks(transcript, chunk_size=100)
+        chunks = split_into_chunks(transcript, chunk_size=350)
         scores = rate_chunks_with_gpt3(chunks)
         processed_transcripts[video_id] = (chunks, scores)
     
@@ -180,4 +207,3 @@ if __name__ == "__main__":
     clip_interesting_segments(interesting_chunks_with_timestamps, TRANSCRIPTS_FOLDER, CLIPS_FOLDER)
     
     print("Process completed.")
-'''

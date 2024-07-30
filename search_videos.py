@@ -71,7 +71,7 @@ def download_youtube_video(video_id, output_dir, cookies_path):
         ydl.download([url])
 
 
-'''
+
 if __name__ == "__main__":
     BASE_DIR = "C:\\Users\\Cameron\\OneDrive\\Desktop\\TikTok Project"
     VIDEOS_DIR = os.path.join(BASE_DIR, 'Videos')
@@ -80,7 +80,7 @@ if __name__ == "__main__":
     # Ensure the Videos directory exists
     os.makedirs(VIDEOS_DIR, exist_ok=True)
 
-    query = "best of jordan peterson"
+    query = "best of shane gillis"
     max_results = 400
     category_id = None
     published_after = "2023-01-01T00:00:00Z"
@@ -94,5 +94,3 @@ if __name__ == "__main__":
             video_id = video['video_id']
             download_youtube_video(video_id, VIDEOS_DIR, COOKIES_PATH)
             print(f"Downloaded video {video_id}")
-
-'''

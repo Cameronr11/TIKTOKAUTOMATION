@@ -53,21 +53,31 @@ def save_caption_and_hashtags(tiktok_folder, caption_and_hashtags):
         file.write(" ".join(caption_and_hashtags['hashtags']))
     print(f"Saved caption and hashtags to {text_file_path}")
 
-# Function to create TikTok video by combining the clipped content and gameplay
 def create_tiktok_video(clipped_content_path, gameplay_path, output_path):
+    # Load the video clips
     clipped_content = VideoFileClip(clipped_content_path)
     gameplay = VideoFileClip(gameplay_path).without_audio()  # Mute the gameplay audio
 
-    # Resize gameplay to fit the bottom half of the TikTok frame
-    gameplay_resized = gameplay.resize(width=clipped_content.size[0])
+    # TikTok dimensions
+    tiktok_width = 1080
+    tiktok_height = 1920
+    half_height = tiktok_height // 2  # Each clip will occupy half the height (960 pixels)
+
+    # Resize clips to fit TikTok frame width and half height
+    clipped_content_resized = clipped_content.resize(width=tiktok_width).resize(height=half_height)
+    gameplay_resized = gameplay.resize(width=tiktok_width).resize(height=half_height)
+
+    # Position the clips
+    clipped_content_resized = clipped_content_resized.set_position(("center", "top"))
     gameplay_resized = gameplay_resized.set_position(("center", "bottom"))
 
-    # Create a blank canvas with the TikTok aspect ratio
-    width, height = clipped_content.size[0], clipped_content.size[1] * 2
-    blank_clip = CompositeVideoClip([clipped_content.set_position("top"), gameplay_resized], size=(width, height))
+    # Create the final composite video
+    final_clip = CompositeVideoClip([clipped_content_resized, gameplay_resized], size=(tiktok_width, tiktok_height))
 
-    final_clip = blank_clip.set_duration(clipped_content.duration)
+    # Set the duration of the final clip to match the clipped content
+    final_clip = final_clip.set_duration(clipped_content.duration)
 
+    # Write the final video to the output file
     final_clip.write_videofile(output_path, codec='libx264')
     print(f"Saved TikTok video: {output_path}")
 
@@ -77,7 +87,7 @@ def load_metadata(metadata_path):
         metadata = json.load(f)
     return metadata
 
-'''
+
 if __name__ == "__main__":
     clips_folder = "C:\\Users\\Cameron\\OneDrive\\Desktop\\TikTok Project\\Clips"
     gameplay_folder = "C:\\Users\\Cameron\\OneDrive\\Desktop\\TikTok Project\\NCGameplay"
@@ -114,4 +124,3 @@ if __name__ == "__main__":
 
     print(f"TikTok posts created and saved to {output_folder}.")
 
-'''

@@ -12,10 +12,10 @@ def download_youtube_video(url, output_path):
 
 if __name__ == "__main__":
     # Replace this URL with the URL of the video you want to download
-    video_url = 'https://www.youtube.com/watch?v=He-jKBESg9I'
+    video_url = 'https://www.youtube.com/watch?v=b2QFKIwQFpc'
     
     # Specify the exact output path
-    output_folder = "C:\\Users\\Cameron\\OneDrive\\Desktop\\NCGameplay\\"
+    output_folder = "C:\\Users\\Cameron\\OneDrive\\Desktop\\"
     
     # Create the output folder if it does not exist
     if not os.path.exists(output_folder):
