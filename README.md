@@ -21,7 +21,7 @@ Gameplay (a common tiktok clipping practice to avoid unoriginal content bans by 
 
 Outcome: 
 
-Using this software I was able to grow an account to 10,000 Followers with over 2 Million views and 150,000 likes in 14 Days.
+Using this software I was able to grow an account to 11,000 Followers with over 3 Million views in 30 days.
 
 Future Imrpovements: Right now the system is designed to produce tiktoks with gameplay underneath however I want to create a seperate file that creates tiktoks without the gameplay, but adds filtering effects to
 the video as another way to bypass the unorignal content bans by tiktok. I also think that there is a better way to find entertaining chunks of the videos that are complete thoughts. 
