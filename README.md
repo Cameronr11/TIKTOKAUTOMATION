@@ -1,28 +1,52 @@
-Overview: 
+# TIKTOKAUTOMATION
 
-TIKTOKAUTOMATION is a project that attempts to completely automate the tiktok clipping content creation model with the hopes of making money on tiktok.
-Essentially the system would search for popular youtube videos based on a query and then use Google text to speech to transcribe the selected videos, 
-passing those onto OpenAi's GPT to find interesting segments of the video, and then the system would clip those segments and style/edit them to be posted to 
-TikTok. 
+TIKTOKAUTOMATION is a project designed to fully automate the TikTok content creation process by clipping and editing popular YouTube videos to 
+generate engaging TikToks. The system aims to grow TikTok accounts and monetize content by leveraging Google Text-to-Speech and OpenAI's 
+GPT models for content selection and enhancement.
 
-Project Organization:
+## Features
 
-5 Main Python Files - Search_Videos.py, Transcribe.py, Clip.py, Create_Tiktok.py, run_tiktok_automation.py
+- **Automated YouTube Video Search:** Finds popular YouTube videos based on a user-provided query.
+- **Transcription with Google Text-to-Speech:** Converts video audio into text for further processing.
+- **Content Analysis with OpenAI GPT:** Identifies the most engaging segments of transcriptions using GPT models.
+- **Video Clipping and Editing:** Clips selected segments, applies edits, and prepares videos for TikTok.
+- **TikTok Formatting:** Adds hashtags, captions, and gameplay overlays to comply with TikTok’s content guidelines.
 
-Search_Videos.py - Utilizes yt_dlp to search and donwload youtube videos based on a query the user provides
+## Project Structure
 
-Transcribe.py - This file contains helper functions to search through all the downloaded videos gathered by Search_videos.py and transcribe each video for later use using Google Text to Speech API
+The project is organized into five main Python files:
 
-Clip.py - This file might be the most important and require the most improvement. Clip.py takes all generated transcripts, uses OpenAi's GPT API to rate sections of the transcripts evaluating for 
-shock value and entertainment. Once finding the best segments we map the timestamps back to the videos and clip those segments saving them to be later edited/formatted for tiktok.
+1. **`Search_Videos.py`**
+   - Utilizes `yt_dlp` to search and download YouTube videos based on a user query.
 
-Create_Tiktok.py - This file adds finishing touches by Creating hashtags and captions for each video using OpenAi's GPT API as well as taking the clips created by Clip.py and stacking those clips on top of
-Gameplay (a common tiktok clipping practice to avoid unoriginal content bans by tiktok). Lastly we format the tiktok so that we produce a clean, ready to post video for tiktok
+2. **`Transcribe.py`**
+   - Contains functions to transcribe downloaded videos using Google Text-to-Speech API.
 
-Outcome: 
+3. **`Clip.py`**
+   - Analyzes transcripts to find high-value content segments with OpenAI GPT. Clips these segments and prepares them for TikTok.
 
-Using this software I was able to grow an account to 11,000 Followers with over 3 Million views in 30 days.
+4. **`Create_Tiktok.py`**
+   - Finalizes the videos by adding hashtags, captions, and overlays, ensuring content is TikTok-ready.
 
-Future Imrpovements: Right now the system is designed to produce tiktoks with gameplay underneath however I want to create a seperate file that creates tiktoks without the gameplay, but adds filtering effects to
-the video as another way to bypass the unorignal content bans by tiktok. I also think that there is a better way to find entertaining chunks of the videos that are complete thoughts. 
+5. **`run_tiktok_automation.py`**
+   - Main script to run the full automation pipeline.
+
+## How It Works
+
+1. **Video Search:** The system searches YouTube for popular videos based on a query.
+2. **Transcription:** Videos are transcribed using Google Text-to-Speech.
+3. **Content Clipping:** GPT evaluates transcripts to find entertaining segments, which are then clipped from the video.
+4. **Final Edits:** Clips are formatted with gameplay overlays and captions, creating a polished TikTok video.
+5. **Posting:** The ready-to-post video is optimized for TikTok growth.
+
+## Outcome
+
+- **Results:** Successfully grew a TikTok account to 11,000 followers with over 3 million views in just 30 days.
+
+## Future Improvements
+
+- **Alternative Video Formats:** Develop new editing styles that use filtering effects instead of gameplay to diversify content while avoiding unoriginal content bans on TikTok.
+- **Enhanced Content Selection:** Explore improved methods for identifying engaging, complete thought segments in videos.
+
+
 
